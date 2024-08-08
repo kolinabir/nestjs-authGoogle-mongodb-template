@@ -14,14 +14,18 @@ import { RefreshToken } from './schemas/refresh-token.schema';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
 import { nanoid } from 'nanoid';
+import { MailService } from 'src/services/mail.service';
+import { ResetToken } from './schemas/reset-token.schema';
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(RefreshToken.name)
     private refreshTokenModel: Model<RefreshToken>,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(ResetToken.name)
+    private resetTokenModel: Model<ResetToken>,
     private jwtService: JwtService,
-    private resetTokenModel: Model<RefreshToken>,
+    private mailService: MailService,
   ) {}
   async singup(signUpdata: SignUpDto) {
     const checkEmailInUse = await this.userModel.findOne({
@@ -151,8 +155,34 @@ export class AuthService {
         userId: checkUserExist._id,
         expiryDate,
       });
+
+      this.mailService.sendPasswordResetEmail(email, resetToken);
     }
 
     return { message: 'If email exist, we will send you an email' };
+  }
+
+  async resetPassword(newPassword: string, resetToken: string) {
+    const checkTokenExist = await this.resetTokenModel.findOne({
+      token: resetToken,
+      expiryDate: { $gte: new Date() },
+    });
+    if (!checkTokenExist) {
+      throw new UnauthorizedException('Token expired');
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      checkTokenExist.userId,
+      {
+        password: hashedPassword,
+      },
+    );
+    if (!updatedUser) {
+      throw new Error('Failed');
+    }
+    //Delete token
+    await this.resetTokenModel.findByIdAndDelete(checkTokenExist._id);
+
+    return { message: 'Password updated' };
   }
 }
