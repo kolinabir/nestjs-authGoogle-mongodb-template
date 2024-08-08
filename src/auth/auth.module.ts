@@ -7,6 +7,7 @@ import {
   RefreshToken,
   RefreshTokenSchema,
 } from './schemas/refresh-token.schema';
+import { ResetToken, ResetTokenSchema } from './schemas/reset-token.schema';
 
 @Module({
   imports: [
@@ -18,6 +19,10 @@ import {
       {
         name: RefreshToken.name,
         schema: RefreshTokenSchema,
+      },
+      {
+        name: ResetToken.name,
+        schema: ResetTokenSchema,
       },
     ]),
   ],

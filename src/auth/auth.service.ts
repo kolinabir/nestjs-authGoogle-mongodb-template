@@ -12,7 +12,8 @@ import { LoginDto } from './dtos/loginDto.dto';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './schemas/refresh-token.schema';
 import { v4 as uuidv4 } from 'uuid';
-
+import { ObjectId } from 'mongodb';
+import { nanoid } from 'nanoid';
 @Injectable()
 export class AuthService {
   constructor(
@@ -20,6 +21,7 @@ export class AuthService {
     private refreshTokenModel: Model<RefreshToken>,
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
+    private resetTokenModel: Model<RefreshToken>,
   ) {}
   async singup(signUpdata: SignUpDto) {
     const checkEmailInUse = await this.userModel.findOne({
@@ -65,13 +67,22 @@ export class AuthService {
     const refreshToken = uuidv4();
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 3);
+    const checkTokenExist = await this.refreshTokenModel.findOneAndUpdate(
+      { userId: { $eq: checkUserExist._id } },
+      {
+        token: refreshToken,
+        expiryDate,
+      },
+    );
+    if (!checkTokenExist) {
+      //store to db
+      const addToDb = await this.refreshTokenModel.create({
+        token: refreshToken,
+        userId: checkUserExist._id,
+        expiryDate,
+      });
+    }
 
-    //store to db
-    const addToDb = await this.refreshTokenModel.create({
-      token: refreshToken,
-      userId: checkUserExist._id,
-      expiryDate,
-    });
     return { token, refreshToken, expiryDate, userId: checkUserExist._id };
   }
 
@@ -98,9 +109,50 @@ export class AuthService {
     //store to db
     const addToDb = await this.refreshTokenModel.create({
       token: newRefreshToken,
-      userId: token._id,
+      userId: token.userId,
       expiryDate,
     });
     return { newToken, newRefreshToken, expiryDate };
+  }
+
+  async changePassword(
+    userId: ObjectId,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Wrong password');
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const updatedUser = await this.userModel.findByIdAndUpdate(userId, {
+      password: hashedPassword,
+    });
+    if (!updatedUser) {
+      throw new Error('Failed');
+    }
+    return { message: 'Password updated' };
+  }
+
+  async forgotPassword(email: string) {
+    const checkUserExist = await this.userModel.findOne({
+      email,
+    });
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 1);
+    if (checkUserExist) {
+      const resetToken = nanoid(64);
+      const resetTokenToDb = await this.resetTokenModel.create({
+        token: resetToken,
+        userId: checkUserExist._id,
+        expiryDate,
+      });
+    }
+
+    return { message: 'If email exist, we will send you an email' };
   }
 }
