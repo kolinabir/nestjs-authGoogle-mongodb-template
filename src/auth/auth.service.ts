@@ -6,13 +6,12 @@ import {
 import { SignUpDto } from './dtos/SignUpDto.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dtos/loginDto.dto';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './schemas/refresh-token.schema';
 import { v4 as uuidv4 } from 'uuid';
-import { ObjectId } from 'mongodb';
 import { nanoid } from 'nanoid';
 import { MailService } from 'src/services/mail.service';
 import { ResetToken } from './schemas/reset-token.schema';
