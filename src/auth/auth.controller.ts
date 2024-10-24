@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dtos/SignUpDto.dto';
 import { LoginDto } from './dtos/loginDto.dto';
@@ -8,6 +8,7 @@ import { ChangePasswordDto } from './dtos/change-password.dto';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { ForgotPasswordDto } from './dtos/forgotPassword.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { GoogleAuthGuard } from './utils/Guards';
 
 @Controller('auth')
 export class AuthController {
@@ -53,4 +54,12 @@ export class AuthController {
       resetPasswordData.resetToken,
     );
   }
+
+  @Get('google-login')
+  @UseGuards(GoogleAuthGuard)
+  handleLogin() {}
+
+  @Get('google/redirect')
+  @UseGuards(GoogleAuthGuard) 
+  handleRedirect() {}
 }

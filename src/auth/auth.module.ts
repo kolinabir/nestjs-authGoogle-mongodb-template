@@ -9,6 +9,8 @@ import {
 } from './schemas/refresh-token.schema';
 import { ResetToken, ResetTokenSchema } from './schemas/reset-token.schema';
 import { MailService } from 'src/services/mail.service';
+import { GoogleStrategy } from './utils/GoogleStrategy';
+import { SessionSerializer } from './utils/Serializer';
 
 @Module({
   imports: [
@@ -28,6 +30,15 @@ import { MailService } from 'src/services/mail.service';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, MailService],
+  providers: [
+    AuthService,
+    MailService,
+    GoogleStrategy,
+    SessionSerializer,
+    {
+      provide: 'AUTH_SERVICE',
+      useClass: AuthService,
+    },
+  ],
 })
 export class AuthModule {}

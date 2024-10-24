@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { nanoid } from 'nanoid';
 import { MailService } from 'src/services/mail.service';
 import { ResetToken } from './schemas/reset-token.schema';
+import { UserDtoForGoogle } from './dtos/GoogleSignup.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -183,5 +184,21 @@ export class AuthService {
     await this.resetTokenModel.findByIdAndDelete(checkTokenExist._id);
 
     return { message: 'Password updated' };
+  }
+
+  async validateUser(userDetails: UserDtoForGoogle) {
+    console.log('AuthService');
+    console.log(userDetails);
+    const user = await this.userModel.findOne({ email: userDetails.email });
+    console.log(user);
+    if (user) return user;
+    console.log('User not found. Creating...');
+    const newUser = new this.userModel({ ...userDetails });
+    return await newUser.save();
+  }
+
+  async findUser(id: number) {
+    const user = await this.userModel.findById(id);
+    return user;
   }
 }
