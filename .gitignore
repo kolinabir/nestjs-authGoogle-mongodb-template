@@ -17,6 +17,8 @@
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .env
+package-lock.json
+yarn.lock
 
 # Gradle:
 .idea/**/gradle.xml
