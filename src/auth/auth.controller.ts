@@ -102,4 +102,13 @@ export class AuthController {
       res.redirect('http://localhost:3000'); // Redirect to frontend
     });
   }
+
+  @Get('protected')
+  @UseGuards(AuthGuard)
+  protectedRoute(@Request() req: CustomRequest) {
+    return {
+      message: 'This is a protected route, only logged in users can access it',
+      user: req.user,
+    };
+  }
 }
